@@ -2,33 +2,36 @@
 
 import scrapy
 from netease_music.items import NeteaseMusicItem
-from selenium import webdriver
-from lxml import etree
-
+from scrapy_splash import SplashRequest
 
 
 class GetListSpider(scrapy.Spider):
-
     name = "getlist"
     #填入歌单地址url
     start_urls = [
-        'https://music.163.com/playlist?id=93043295'
+        'http://music.163.com/#/playlist?id=697601210'
     ]
+    #http://music.163.com/#/playlist?id=697601210
+    #http://music.163.com/api/v3/playlist/detail?id=93043295csrf_token=
+
+    def start_requests(self):
+        meta = {
+            'splash':{
+                'endpoint': 'render.html',
+                'args': {
+                    'wait': 10,
+                    'html': 1,
+                    'images': 0,
+                    'iframe': 1
+                }
+            }
+        }
+        for url in self.start_urls:
+            yield SplashRequest(url,self.parse,meta=meta)
 
     def parse(self, response):
-
-        # driver = webdriver.PhantomJS()
-        # driver.get(self.start_urls)
-        # driver.switch_to.frame("g_iframe")
-        # html = driver.page_source
-
-        tree = etree.HTML()
-
-        for song in html.xpath('//div[@class="j-flag"]'):
+        response
+        for song in response.xpath('//ul[@class="f-hide"]'):
             item = NeteaseMusicItem()
-            item['num'] = song.xpath('//td[@class="left"]/span[@class="num"]/text()').extract()
-            item['title'] = song.xpath('//div[@class="f-cb"]//text()').extract()
-            item['length'] = song.xpath('///div[@class=" s-fc3"]//text()').extract()
-            item['author'] = song.xpath('//*[@id="181026421491009155452"]/td[5]/div/a/text()').extract()
-            item['album'] = song.xpath('//*[@id="181026421491009155452"]/td[6]/div/a/text()').extract()
+            item['title'] = song.xpath('/li/a/text()')
             yield item
